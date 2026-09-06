@@ -1,0 +1,20 @@
+local Config = {
+    SchemaVersion = 1,
+    ProductionDataStoreName = "FindTheDefect_PlayerData_v1",
+    StudioDataStoreName = "FindTheDefect_PlayerData_TEST_v1",
+    UseTestDataStoreInStudio = true,
+    UseMemoryStoreWhenUnpublishedStudio = true,
+    AutosaveInterval = 120,
+    ImportantSaveDelay = 8,
+    MinimumSaveSpacing = 12,
+    MaximumLoadRetries = 4,
+    MaximumSaveRetries = 3,
+    RetryBaseDelay = 1,
+    RetryMaxDelay = 8,
+    SessionLockTimeout = 300,
+    ShutdownTimeout = 12,
+    DebugResetPlayerData = false,
+    DebugSeedPlayerData = false,
+    StudioAnalyticsLogging = true,
+}
+return table.freeze(Config)
