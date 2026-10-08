@@ -1,0 +1,6 @@
+# Toolchain for machines that can run it (`rokit install`). CI downloads the
+# same pinned versions directly; see .github/workflows/ci.yml.
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+stylua = "JohnnyMorganz/StyLua@2.5.2"
+selene = "Kampfkarren/selene@0.32.0"
