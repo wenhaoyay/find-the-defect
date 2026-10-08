@@ -1,59 +1,48 @@
-# Architecture notes
+# Architecture
 
-## Inspection loop
+## Shape of the game
 
-The server owns the production-line state. It selects an eligible product, rolls a defect, applies optional anomaly state, spawns the product, and tracks the active inspection record until the player rejects it or it exits the inspection window.
+A server hosts several players in one shared factory hall. Each player runs **their own inspection
+line** (a plot); rushes, the rarest-find pedestal and announcements are shared by the server. See
+[ADR 0001](decisions/0001-multiplayer-model.md).
 
-The client sends requests; the server decides whether those requests are valid. `canPlayerAct` requires a loaded active session, while `RateLimiter` applies per-player token buckets to remote actions such as upgrades and factory-mode changes.
+```text
+Bootstrap.server.luau          starts services in order, admits players
+  Services/
+    DataService                ProfileStore session per player; Schema.Repair on load
+    EconomyService             the only code that changes credits; economy analytics
+    Analytics                  Roblox built-in onboarding / economy / progression events
+    (Phase 2) PlotService      assigns a line to a player, releases it on leave
+    (Phase 2) LineService      the spawn timeline per line
+    (Phase 2) InspectionService  validates rejects (with lag tolerance), resolves outcomes
+    (Phase 3) QualityService   the quality meter and product recalls
+  Data/Schema                  the player record: template, migrations, repair
+  Util/RateLimiter             per-player token buckets for remotes
+ReplicatedStorage/Shared
+  Config                       every game number, frozen
+  Gameplay                     pure rules (rolls, anomaly luck) shared by server and client
+  Util/Signal                  module-to-module events
+```
 
-The server distinguishes three outcomes:
+## Rules the code keeps
 
-- a valid reject for a defect/anomaly;
-- a false reject of a normal product;
-- a missed defect that passes the inspection window.
+- **One source of truth for player state.** `DataService.Get(player)` is the live record; nothing else
+  stores player state. Replicated values (Phase 2) are derived from it, never read back.
+- **One writer per kind of state.** Credits change only in `EconomyService`; the record's shape only in
+  `Schema`.
+- **Configs are frozen.** Studio-only debug switches live in `Config.Debug` and read as off outside Studio.
+- **Repair never destroys.** A record from a newer schema is refused; keys this version does not know
+  are kept.
+- **Per player, not per server.** Anomaly luck, onboarding and rate limits belong to a player. The
+  legacy server kept them globally because it allowed one player per server.
 
-Those outcomes feed credits, line revenue, quality streaks, onboarding, analytics and persistent statistics.
+## Player data
 
-## Product and defect model
+ProfileStore handles session locks, autosave, retries and the shutdown flush. `DataService` adds:
+repair before use, kick if another server takes the session, synchronous release handlers (so play
+time and analytics totals are in the final save), and throttled checkpoints after important changes.
+See [ADR 0002](decisions/0002-profilestore.md).
 
-`ProductRegistry` defines 12 products across Toys and Household departments. Each product maps visual components to the `MissingPart` and `ExtraPart` defect families. `ProductConfig` adds weighted defect selection, onboarding fixtures, repeat-product suppression and streak multipliers.
+## Testing
 
-The six base inspection states are Normal, WrongColour, Tiny, Giant, MissingPart and ExtraPart. Component defects are enabled only after the relevant progression point.
-
-## Anomalies and collection
-
-`AnomalyService` uses a two-stage roll:
-
-1. whether an anomaly occurs;
-2. the quality/tier of the anomaly.
-
-The current configuration exposes Golden and Glitched anomalies. Discoveries are stored per product/anomaly pair, creating a 24-entry archive across 12 products. A guaranteed first Golden is available after a configured number of eligible products if one has not appeared naturally.
-
-## Persistence
-
-`PlayerDataService` owns the save boundary. Important properties include:
-
-- schema versioning and rejection of unsupported future schemas;
-- migration from older flat fields into the current nested record;
-- defensive repair/clamping for corrupt numeric and boolean fields;
-- DataStore `UpdateAsync` writes;
-- session IDs with a five-minute lock timeout;
-- monotonic save revisions to detect conflicting writers;
-- bounded load/save retries with exponential backoff;
-- autosave and delayed checkpoints for important changes;
-- a memory adapter for unpublished Studio testing;
-- a self-test matrix covering migration, corrupt-record repair, repeated save cycles, full progression state and deep-copy defaults.
-
-A failed or conflicting load does not silently create a fresh production profile; the server treats safe loading as a prerequisite for gameplay.
-
-## Progression
-
-Progression is split between line upgrades and factory projects.
-
-Line/research/inspector/rush upgrades control product value, belt motor tier, inspection runway length, anomaly luck/quality, streak protection and rush duration/pay.
-
-Factory projects unlock production and research tiers, the reject gallery and the Household department. `LineProgression` changes the physical inspection runway and product spawn location as the runway upgrade advances.
-
-## Public snapshot boundary
-
-The original Roblox place also contains a large client UI, environment scripts, product model builders, presentation/audio configuration and the complete world model. Those remain private. The public source focuses on state, persistence, progression, inspection and factory systems.
+[ADR 0003](decisions/0003-studio-free-testing.md) explains the harness and what it can and cannot prove.

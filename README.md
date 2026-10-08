@@ -1,122 +1,61 @@
 # Find the Defect!
 
-**Server-authoritative Roblox factory inspection and progression systems built in Luau.**
+**A multiplayer Roblox factory game about catching defective products — built in Luau, tested without Studio.**
 
-Find the Defect! is a factory quality-control game where products move through an inspection line and the player decides whether to reject defective units. The project combines weighted defect generation, persistent factory progression, anomaly collection, streak/rush systems and an explorable factory layer.
+Products roll down an inspection line; you reject the defective ones before they escape. Six defect types,
+rare Golden and Glitched anomalies to collect, rushes, streaks, and a factory that grows as you earn.
 
-> **Status:** active development. This repository is a curated portfolio snapshot recovered from the original Roblox place; it is not the complete game or a public release build.
+> **Status:** being rebuilt for a multiplayer launch. Phase 1 (foundation) is in progress; the playable
+> inspection loop is still the single-player version in [`legacy/`](legacy/). See [the roadmap](docs/roadmap.md).
 
-## What this repository demonstrates
+## What is here
 
-### Server-authoritative inspection
+| Path | What |
+|---|---|
+| [`src/shared/Config`](src/shared/Config) | Every game number: products, defects, upgrades, anomalies, factory projects, line geometry. Frozen at load; one source for each value. |
+| [`src/shared/Gameplay`](src/shared/Gameplay) | Pure rules: what comes down the line next, per-player anomaly luck. |
+| [`src/server/Data/Schema.luau`](src/server/Data/Schema.luau) | The player record: defaults, versioned migrations, and repair that refuses newer data and keeps unknown keys. |
+| [`src/server/Services`](src/server/Services) | `DataService` (ProfileStore sessions), `EconomyService` (the only writer of credits), `Analytics` (Roblox's built-in funnels and economy events). |
+| [`src/server/Bootstrap.server.luau`](src/server/Bootstrap.server.luau) | The server's one entry point. |
+| [`tests/`](tests) | 61 tests, including cross-server data scenarios. |
+| [`tools/harness`](tools/harness) | Runs the tests under Node: real Luau, emulated engine. |
+| [`legacy/`](legacy) | The original single-player snapshot, kept for reference until Phase 2 replaces it. |
 
-The server owns active products, defect state, rewards and progression. Client requests are accepted only for the loaded active inspector and remote actions are rate-limited server-side.
+## Running the tests
 
-The inspection loop handles correct rejects, false rejects and missed defects separately, with those outcomes feeding credits, line revenue, quality streaks, onboarding state, analytics and persistent statistics.
-
-### Product/defect generation
-
-The public registry contains **12 products** across Toys and Household departments and six base inspection states:
-
-- Normal
-- Wrong Colour
-- Tiny
-- Giant
-- Missing Part
-- Extra Part
-
-Product-specific components define what can be removed or duplicated for the component-defect families. Spawn logic also includes deterministic onboarding examples and repeat-product suppression.
-
-### Persistent progression
-
-`PlayerDataService` is the strongest systems module in this project. It contains:
-
-- schema versioning and legacy-field migration;
-- defensive repair/clamping of corrupt data;
-- `DataStoreService:UpdateAsync` persistence;
-- session locks and save revisions for conflicting-session protection;
-- bounded load/save retries with exponential backoff;
-- autosave and delayed checkpoints;
-- Studio memory/test-store paths;
-- persistence self-tests covering migration, corruption repair, repeated save cycles, the full progression matrix and deep-copy defaults.
-
-### Anomalies and collection
-
-Products can also roll rare anomaly states. The current public configuration contains Golden and Glitched variants, with a two-stage occurrence/quality roll and a guaranteed early Golden safeguard.
-
-With 12 products × 2 anomaly types, the persistent archive contains **24 discovery entries**.
-
-### Factory progression
-
-Progression is not only numeric. Upgrades can change the physical production line itself: `LineProgression` expands the inspection runway and moves the product spawn point as the runway level increases.
-
-The wider factory progression includes production/research tiers, a research lab, reject gallery and a second Household production department.
-
-## Start here
-
-For a technical review:
-
-- [`src/server/PlayerDataService.luau`](src/server/PlayerDataService.luau) — schema repair, session locking, revision-safe persistence and self-tests.
-- [`src/server/FindDefectServer.server.luau`](src/server/FindDefectServer.server.luau) — authoritative inspection loop, streak/rush handling, upgrades and mode transitions.
-- [`src/shared/ProductRegistry.luau`](src/shared/ProductRegistry.luau) — data-driven product/component/defect definitions.
-- [`src/server/AnomalyService.luau`](src/server/AnomalyService.luau) — anomaly rolls, archive restoration and rarest-discovery tracking.
-- [`src/server/LineProgression.luau`](src/server/LineProgression.luau) — physical conveyor/runway progression.
-
-## Architecture
-
-```text
-Roblox client
-    │ inspection / upgrade / mode requests
-    ▼
-Authoritative server
-    ├── FindDefectServer       inspection loop, streaks, rushes, rewards
-    ├── PlayerDataService      persistence, schema repair, session locking
-    ├── RateLimiter            per-player remote throttling
-    ├── AnomalyService         rare variant rolls + collection
-    ├── LineProgression        physical inspection-line upgrades
-    ├── FactoryProgression     project/gallery/factory progression
-    └── Analytics              session and funnel events
-            │
-            ▼
-Shared configuration
-    ├── ProductRegistry        products, components and defect definitions
-    ├── ProductConfig          weighted rolls and streak rules
-    ├── UpgradeConfig          line/research/inspector/rush progression
-    ├── FactoryConfig          factory project tree
-    ├── DepartmentConfig       department unlocks
-    └── AnomalyConfig          archive and anomaly probabilities
+```sh
+npm ci --ignore-scripts
+npm test             # all specs
+npm test -- data     # only spec files whose path contains "data"
 ```
 
-More detail is in [`docs/architecture.md`](docs/architecture.md).
+There is no Roblox Studio in the loop. [`tools/harness`](tools/harness) runs the game's Luau on the real
+Luau VM (compiled to WebAssembly) against a small engine emulator: a virtual clock and task scheduler,
+deferred signals, strict instances, Players, and a DataStore plus MessagingService **shared by several
+emulated servers** — with latency, injected failures, shutdowns and crashes. That is what lets the
+tests cover the cases that matter for player data:
 
-## Repository layout
+- a player leaves while an autosave is in flight — the final state is still saved;
+- a player rejoins another server immediately — they wait for the old server, not get kicked;
+- a server crashes — the next server recovers the last save within a minute and a half;
+- the same player opens a second server — the newest wins and the old one lets go;
+- a save from a newer game version — refused and left untouched.
 
-```text
-src/
-  shared/    product, defect, anomaly, upgrade and persistence configuration
-  server/    persistence, inspection, anomaly and factory progression systems
-docs/
-  architecture.md
-```
+The emulator is strict where Roblox is strict (unknown members error, values are type-checked, the
+DataStore refuses mixed tables and NaN) and adversarial where Roblox is timing-dependent. It does not
+emulate physics, rendering, replication or the client; those need a real Roblox client (see the roadmap).
 
-## Why this is a curated snapshot
+## Building the place
 
-The original `.rbxl` contains the complete factory world, client UI, environment logic, presentation/audio configuration, product model builders and other content that is not necessary for technical review. Those remain private.
+With [Rokit](https://github.com/rojo-rbx/rokit) installed: `rokit install`, then
+`rojo build default.project.json -o find-the-defect.rbxl`. CI builds the place on every push.
 
-The Luau files here were extracted from the embedded Roblox place source. The public snapshot intentionally keeps the engineering-heavy systems and omits most presentation code. Some server modules therefore reference private visual/world modules that are not included here.
+## Third-party code
 
-This repository is for **technical review**, not a one-command reproduction of the full game.
+[ProfileStore](https://github.com/MadStudioRoblox/ProfileStore) is vendored at a pinned commit and
+reviewed; nothing is fetched by asset id. The list, with licences and review notes, is in
+[`THIRD_PARTY.md`](THIRD_PARTY.md).
 
-## Validation boundary
+## Design decisions
 
-The persistence module contains its own in-project self-test matrix, but I am **not claiming a fresh automated test run from this extracted repository** because Roblox Studio/Luau runtime services are not available in the publication environment.
-
-The extracted source was checked against the original `.rbxl` payload and scanned for credentials and unintended development artefacts before publication.
-
-## Current limitations
-
-- Active work in progress; gameplay balance and presentation are still changing.
-- No public experience link yet.
-- The public repo excludes the `.rbxl`, full client/UI, product model builders and world/presentation layer.
-- Some server imports intentionally point to those private modules.
-- The original place metadata contains an internal `5C-LaunchReady` milestone label; that is an internal development checkpoint, not a claim that the game is publicly shipped.
+Recorded in [`docs/decisions`](docs/decisions). The architecture is in [`docs/architecture.md`](docs/architecture.md).
