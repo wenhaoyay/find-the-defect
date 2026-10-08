@@ -64,7 +64,9 @@ describe("player data", function()
         DataA.Get(player).Economy.Credits = 777 -- not saved yet
         t.server:removePlayer(player)
         local started = t.world.now
-        local onB = t.within(serverB, function() return join(t, serverB, DataB) end)
+        local onB = t.within(serverB, function()
+            return join(t, serverB, DataB)
+        end)
         expect(DataB.IsLoaded(onB)).toBe(true)
         expect(Rbx.kickMessage(onB)).toBeNil()
         expect(DataB.Get(onB).Economy.Credits).toBe(777)
@@ -79,7 +81,9 @@ describe("player data", function()
         local function updates()
             local count = 0
             for _, call in ipairs(t.world.cloud.calls) do
-                if call.method == "UpdateAsync" then count += 1 end
+                if call.method == "UpdateAsync" then
+                    count += 1
+                end
             end
             return count
         end
@@ -125,7 +129,9 @@ describe("player data", function()
         DataA.Get(player).Economy.Credits = 150 -- never saved
         t.server:kill()
         local started = t.world.now
-        local onB = t.within(serverB, function() return join(t, serverB, DataB) end)
+        local onB = t.within(serverB, function()
+            return join(t, serverB, DataB)
+        end)
         expect(DataB.IsLoaded(onB)).toBe(true)
         expect(DataB.Get(onB).Economy.Credits).toBe(100)
         expect(t.world.now - started).toBeLessThan(90)
@@ -137,10 +143,14 @@ describe("player data", function()
         local DataB = boot(serverB)
         local onA = join(t, t.server, DataA)
         DataA.Get(onA).Economy.Credits = 55
-        local onB = t.within(serverB, function() return join(t, serverB, DataB) end)
+        local onB = t.within(serverB, function()
+            return join(t, serverB, DataB)
+        end)
         expect(DataB.IsLoaded(onB)).toBe(true)
         expect(DataB.Get(onB).Economy.Credits).toBe(55)
-        t.world:waitUntil(function() return onA.Parent == nil end, 30, "old server to let go")
+        t.world:waitUntil(function()
+            return onA.Parent == nil
+        end, 30, "old server to let go")
         expect(Rbx.kickMessage(onA)).toContain("another server")
         expect(DataA.IsLoaded(onA)).toBe(false)
     end)
@@ -154,7 +164,9 @@ describe("player data", function()
         })
         local DataService = boot(t.server)
         local player = join(t, t.server, DataService)
-        t.world:waitUntil(function() return player.Parent == nil end, 30, "kick")
+        t.world:waitUntil(function()
+            return player.Parent == nil
+        end, 30, "kick")
         expect(Rbx.kickMessage(player)).toContain("newer version")
         waitReleased(t)
         expect(stored(t)).toEqual({ SchemaVersion = 3, Economy = { Credits = 4242 } })
@@ -195,7 +207,9 @@ describe("player data", function()
         local function writes()
             local count = 0
             for _, call in ipairs(t.world.cloud.calls) do
-                if call.method == "UpdateAsync" then count += 1 end
+                if call.method == "UpdateAsync" then
+                    count += 1
+                end
             end
             return count
         end

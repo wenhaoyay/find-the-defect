@@ -11,7 +11,11 @@ describe("analytics", function()
         Analytics.Custom(player, "RushCompleted", 14, { { "Caught", 9 }, { "Mistakes", 2 }, { "Credits", 340 } })
         local event = t.server.analytics[1]
         expect(event.name).toBe("RushCompleted")
-        expect(event.fields).toEqual({ CustomField01 = "Caught=9", CustomField02 = "Mistakes=2", CustomField03 = "Credits=340" })
+        expect(event.fields).toEqual({
+            CustomField01 = "Caught=9",
+            CustomField02 = "Mistakes=2",
+            CustomField03 = "Credits=340",
+        })
     end)
 
     it("refuses a fourth field instead of dropping it", function(t)
@@ -29,7 +33,9 @@ describe("analytics", function()
         Analytics.Progression(player, "Factory", "Complete", 2, "ProductionSystemsII")
         Analytics.Economy(player, "Sink", 75, 25, "Shop", "Upgrade:ProductValue:2")
         local kinds = {}
-        for _, event in ipairs(t.server.analytics) do table.insert(kinds, event.kind) end
+        for _, event in ipairs(t.server.analytics) do
+            table.insert(kinds, event.kind)
+        end
         expect(kinds).toEqual({ "Onboarding", "Progression", "Economy" })
     end)
 end)
@@ -40,13 +46,17 @@ describe("rate limiter", function()
         local player = t.server:addPlayer({ userId = 1 })
         local allowed = 0
         for _ = 1, 10 do
-            if RateLimiter.Allow(player, "Reject", 0.125, 4) then allowed += 1 end
+            if RateLimiter.Allow(player, "Reject", 0.125, 4) then
+                allowed += 1
+            end
         end
         expect(allowed).toBe(4)
         t.wait(1)
         allowed = 0
         for _ = 1, 20 do
-            if RateLimiter.Allow(player, "Reject", 0.125, 4) then allowed += 1 end
+            if RateLimiter.Allow(player, "Reject", 0.125, 4) then
+                allowed += 1
+            end
         end
         expect(allowed).toBe(4) -- refilled to the burst, not beyond
     end)
@@ -60,7 +70,9 @@ describe("rate limiter", function()
         while t.world.now - started < 10 do -- a bot clicking 3 times every frame
             for _ = 1, 3 do
                 attempts += 1
-                if RateLimiter.AllowAction(player, config.Inspection.RateLimits, "Reject") then allowed += 1 end
+                if RateLimiter.AllowAction(player, config.Inspection.RateLimits, "Reject") then
+                    allowed += 1
+                end
             end
             t.wait()
         end

@@ -52,7 +52,9 @@ end
 
 function Anomalies.OddsLabel(anomalyId, luckMultiplier, glitchedShare)
     local chance = Anomalies.Chance(anomalyId, luckMultiplier, glitchedShare)
-    if chance <= 0 then return "never" end
+    if chance <= 0 then
+        return "never"
+    end
     return "1 / " .. tostring(math.floor(1 / chance + 0.5))
 end
 
@@ -69,8 +71,12 @@ end
 -- The one rule for "rarest find", used live and when restoring a save: a find
 -- replaces the current one only if its tier is strictly rarer. Ties keep the first.
 function Anomalies.IsRarer(candidateId, currentId)
-    if currentId == nil then return candidateId ~= nil end
-    if candidateId == nil then return false end
+    if currentId == nil then
+        return candidateId ~= nil
+    end
+    if candidateId == nil then
+        return false
+    end
     return Anomalies.Definitions[candidateId].Priority > Anomalies.Definitions[currentId].Priority
 end
 

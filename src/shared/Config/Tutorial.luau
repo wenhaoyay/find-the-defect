@@ -6,11 +6,11 @@
 local Tutorial = {}
 
 Tutorial.Steps = {
-    "Arrived",          -- 1: the line started for the first time
-    "FirstCatch",       -- 2: first defect rejected (pays FirstCatchReward)
-    "FirstUpgrade",     -- 3: first upgrade bought
-    "FirstShiftRush",   -- 4: the first-shift rush started
-    "ShiftComplete",    -- 5: the first-shift rush ended (pays CompletionBonus)
+    "Arrived", -- 1: the line started for the first time
+    "FirstCatch", -- 2: first defect rejected (pays FirstCatchReward)
+    "FirstUpgrade", -- 3: first upgrade bought
+    "FirstShiftRush", -- 4: the first-shift rush started
+    "ShiftComplete", -- 5: the first-shift rush ended (pays CompletionBonus)
 }
 
 Tutorial.FirstCatchReward = 25

@@ -7,7 +7,9 @@ local RateLimiter = {}
 local buckets = {}
 
 function RateLimiter.Allow(player, key, interval, burst)
-    if typeof(player) ~= "Instance" or not player:IsA("Player") or type(key) ~= "string" then return false end
+    if typeof(player) ~= "Instance" or not player:IsA("Player") or type(key) ~= "string" then
+        return false
+    end
     interval = math.max(0.01, tonumber(interval) or 0.1)
     burst = math.max(1, math.floor(tonumber(burst) or 1))
 
@@ -25,7 +27,9 @@ function RateLimiter.Allow(player, key, interval, burst)
 
     bucket.Tokens = math.min(burst, bucket.Tokens + (now - bucket.UpdatedAt) / interval)
     bucket.UpdatedAt = now
-    if bucket.Tokens < 1 then return false end
+    if bucket.Tokens < 1 then
+        return false
+    end
     bucket.Tokens -= 1
     return true
 end

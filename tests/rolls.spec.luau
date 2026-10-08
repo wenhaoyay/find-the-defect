@@ -21,7 +21,11 @@ describe("rolls", function()
         local last, run, longest = nil, 0, 0
         for index = 7, 3000 do
             local productId = Rolls.Product(index, { "TeddyBear", "RubberDuck" }, random, last, run)
-            if productId == last then run += 1 else last, run = productId, 1 end
+            if productId == last then
+                run += 1
+            else
+                last, run = productId, 1
+            end
             longest = math.max(longest, run)
         end
         expect(longest).toBe(2)
@@ -56,7 +60,11 @@ describe("rolls", function()
     it("guarantees a first Golden, once, after the configured count", function()
         local AnomalyRoller = require(Shared().Gameplay.AnomalyRoller)
         local config = require(Shared().Config)
-        local never = { NextNumber = function() return 0.999 end }
+        local never = {
+            NextNumber = function()
+                return 0.999
+            end,
+        }
         local roller = AnomalyRoller.new(false)
         for _ = 1, config.Anomalies.FirstGoldenGuaranteeAfter do
             expect(roller:Roll(never, 1)).toBeNil()
@@ -64,17 +72,27 @@ describe("rolls", function()
         local id, guaranteed = roller:Roll(never, 1)
         expect(id).toBe("Golden")
         expect(guaranteed).toBe(true)
-        for _ = 1, 200 do expect(roller:Roll(never, 1)).toBeNil() end
+        for _ = 1, 200 do
+            expect(roller:Roll(never, 1)).toBeNil()
+        end
         -- A player who has met a Golden before gets no guarantee.
         local veteran = AnomalyRoller.new(true)
-        for _ = 1, 200 do expect(veteran:Roll(never, 1)).toBeNil() end
+        for _ = 1, 200 do
+            expect(veteran:Roll(never, 1)).toBeNil()
+        end
     end)
 
     it("keeps luck per player: one player's rolls do not use up another's guarantee", function()
         local AnomalyRoller = require(Shared().Gameplay.AnomalyRoller)
-        local never = { NextNumber = function() return 0.999 end }
+        local never = {
+            NextNumber = function()
+                return 0.999
+            end,
+        }
         local a, b = AnomalyRoller.new(false), AnomalyRoller.new(false)
-        for _ = 1, 30 do a:Roll(never, 1) end
+        for _ = 1, 30 do
+            a:Roll(never, 1)
+        end
         expect(b.EligibleProducts).toBe(0)
     end)
 
@@ -85,7 +103,11 @@ describe("rolls", function()
         local golden, glitched, n = 0, 0, 400000
         for _ = 1, n do
             local id = roller:Roll(random, 3, 0.25)
-            if id == "Golden" then golden += 1 elseif id == "Glitched" then glitched += 1 end
+            if id == "Golden" then
+                golden += 1
+            elseif id == "Glitched" then
+                glitched += 1
+            end
         end
         expect((golden + glitched) / n).toBeCloseTo(0.018, 0.0015)
         expect(glitched / (golden + glitched)).toBeCloseTo(0.25, 0.03)

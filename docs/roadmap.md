@@ -14,7 +14,7 @@ Multiplayer model and defaults: [ADR 0001](decisions/0001-multiplayer-model.md).
 - [x] Tutorial progress saved as a step, so an early leave can resume (the Phase 2 loop reads it)
 - [x] Configs consolidated and frozen; one source for line geometry; anomaly odds computed, not typed
 - [x] `EconomyService` as the only writer of credits, reporting to Roblox's economy dashboard
-- [ ] CI's first run (StyLua and Selene are advisory until then)
+- [x] CI green: Rojo builds the place, tests pass on Linux, StyLua and Selene clean (`npm run format`)
 - [ ] One pass on a real Roblox staging place to confirm the data scenarios
 
 **Done when:** CI is green and the data scenarios behave the same on a staging place.

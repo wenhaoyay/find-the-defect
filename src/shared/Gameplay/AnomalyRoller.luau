@@ -28,13 +28,17 @@ function AnomalyRoller:Roll(random, luckMultiplier, glitchedShare)
     if random:NextNumber() < chance then
         local weights = Anomalies.QualityWeights(glitchedShare)
         local total = 0
-        for _, anomalyId in ipairs(Anomalies.QualityOrder) do total += weights[anomalyId] end
+        for _, anomalyId in ipairs(Anomalies.QualityOrder) do
+            total += weights[anomalyId]
+        end
         local roll = random:NextNumber() * total
         local cumulative = 0
         for _, anomalyId in ipairs(Anomalies.QualityOrder) do
             cumulative += weights[anomalyId]
             if roll < cumulative then
-                if anomalyId == "Golden" then self.GoldenEncountered = true end
+                if anomalyId == "Golden" then
+                    self.GoldenEncountered = true
+                end
                 return anomalyId, false
             end
         end

@@ -40,7 +40,9 @@ Inspection.RateLimits = {
 
 function Inspection.StreakMultiplier(streak)
     for _, tier in ipairs(Inspection.StreakTiers) do
-        if streak >= tier.Minimum then return tier.Multiplier end
+        if streak >= tier.Minimum then
+            return tier.Multiplier
+        end
     end
     return 1
 end

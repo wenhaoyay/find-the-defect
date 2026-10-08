@@ -29,15 +29,21 @@ end
 
 function Signal:Fire(...)
     for _, connection in ipairs(table.clone(self.handlers)) do
-        if connection.Connected then task.spawn(connection.handler, ...) end
+        if connection.Connected then
+            task.spawn(connection.handler, ...)
+        end
     end
 end
 
 function Connection:Disconnect()
-    if not self.Connected then return end
+    if not self.Connected then
+        return
+    end
     self.Connected = false
     local index = table.find(self.signal.handlers, self)
-    if index then table.remove(self.signal.handlers, index) end
+    if index then
+        table.remove(self.signal.handlers, index)
+    end
 end
 
 return Signal

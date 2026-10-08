@@ -3,8 +3,12 @@
 -- Studio-only debug switches live in Debug, and read as off outside Studio.
 
 local function deepFreeze(value)
-    if type(value) ~= "table" or table.isfrozen(value) then return value end
-    for _, child in pairs(value) do deepFreeze(child) end
+    if type(value) ~= "table" or table.isfrozen(value) then
+        return value
+    end
+    for _, child in pairs(value) do
+        deepFreeze(child)
+    end
     return table.freeze(value)
 end
 

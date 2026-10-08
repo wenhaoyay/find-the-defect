@@ -70,7 +70,9 @@ Factory.BaseTier = { Production = 1, Research = 0 }
 function Factory.MaxTier(branch)
     local highest = Factory.BaseTier[branch]
     for _, project in pairs(Factory.Projects) do
-        if project.Branch == branch then highest = math.max(highest, project.Tier) end
+        if project.Branch == branch then
+            highest = math.max(highest, project.Tier)
+        end
     end
     return highest
 end

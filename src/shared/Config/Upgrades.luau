@@ -128,14 +128,18 @@ Upgrades.Rush = {
 -- The level a player can hold: 1..#Levels, or 0..#Levels-1 for zero-based upgrades.
 function Upgrades.LevelRange(upgradeId)
     local definition = Upgrades.Definitions[upgradeId]
-    if definition.ZeroBased then return 0, #definition.Levels - 1 end
+    if definition.ZeroBased then
+        return 0, #definition.Levels - 1
+    end
     return 1, #definition.Levels
 end
 
 -- The config row for a held level.
 function Upgrades.Get(upgradeId, level)
     local definition = Upgrades.Definitions[upgradeId]
-    if not definition then return nil end
+    if not definition then
+        return nil
+    end
     return definition.Levels[definition.ZeroBased and level + 1 or level]
 end
 

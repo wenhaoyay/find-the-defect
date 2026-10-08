@@ -7,7 +7,9 @@ end
 
 local function hasRepair(repairs, text)
     for _, message in ipairs(repairs) do
-        if string.find(message, text, 1, true) then return true end
+        if string.find(message, text, 1, true) then
+            return true
+        end
     end
     return false
 end
@@ -100,7 +102,13 @@ describe("schema", function()
             SchemaVersion = 1,
             Economy = { Credits = 321, LineRevenue = 4000 },
             Line = { ProductValueLevel = 3, BeltMotorTier = 2, OperatingTier = 2, InspectionRunwayLevel = 1 },
-            Factory = { ProductionTier = 2, ResearchTier = 1, ResearchLabPurchased = true, RejectGalleryPurchased = false, HouseholdProductionPurchased = true },
+            Factory = {
+                ProductionTier = 2,
+                ResearchTier = 1,
+                ResearchLabPurchased = true,
+                RejectGalleryPurchased = false,
+                HouseholdProductionPurchased = true,
+            },
             Onboarding = { HasPlayedBefore = true, HasCompletedFirstShift = true, EarlyGoldenGuaranteeSatisfied = true },
             _Meta = { SaveRevision = 9, SessionId = "abc", SessionTouchedAt = 1, LastSavedAt = 1 },
         })
@@ -117,7 +125,10 @@ describe("schema", function()
     end)
 
     it("migrates a v1 player who left mid-tutorial to step 0, not 'returning'", function()
-        local record = Schema().Repair({ SchemaVersion = 1, Onboarding = { HasPlayedBefore = true, HasCompletedFirstShift = false } })
+        local record = Schema().Repair({
+            SchemaVersion = 1,
+            Onboarding = { HasPlayedBefore = true, HasCompletedFirstShift = false },
+        })
         expect(record.Onboarding.TutorialStep).toBe(0)
     end)
 
@@ -161,8 +172,12 @@ describe("schema", function()
         raw.Factory.ResearchTier = config.Factory.MaxTier("Research")
         raw.Factory.RejectGalleryPurchased = true
         raw.Factory.HouseholdProductionPurchased = true
-        for key in pairs(raw.Collection.Archive) do raw.Collection.Archive[key] = true end
-        for productId in pairs(raw.Products.Unlocked) do raw.Products.Unlocked[productId] = true end
+        for key in pairs(raw.Collection.Archive) do
+            raw.Collection.Archive[key] = true
+        end
+        for productId in pairs(raw.Products.Unlocked) do
+            raw.Products.Unlocked[productId] = true
+        end
         raw.Products.Departments.Household = true
         raw.Funnel.FirstUpgradePurchased = true
         raw.Onboarding.TutorialStep = 5

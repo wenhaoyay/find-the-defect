@@ -24,9 +24,13 @@ Schema.Version = 2
 local MAX_AMOUNT = 9e15
 
 local function deepCopy(value)
-    if type(value) ~= "table" then return value end
+    if type(value) ~= "table" then
+        return value
+    end
     local copy = {}
-    for key, child in pairs(value) do copy[key] = deepCopy(child) end
+    for key, child in pairs(value) do
+        copy[key] = deepCopy(child)
+    end
     return copy
 end
 Schema.DeepCopy = deepCopy
@@ -45,12 +49,16 @@ Schema.UpgradeFields = {
 
 function Schema.Template()
     local unlocked, departments, revenue, archive = {}, {}, {}, {}
-    for _, productId in ipairs(Products.Order) do unlocked[productId] = false end
+    for _, productId in ipairs(Products.Order) do
+        unlocked[productId] = false
+    end
     for _, departmentId in ipairs(Departments.Order) do
         local definition = Departments.Definitions[departmentId]
         departments[departmentId] = definition.DefaultUnlocked
         revenue[departmentId] = 0
-        if definition.DefaultUnlocked then unlocked[definition.StarterProduct] = true end
+        if definition.DefaultUnlocked then
+            unlocked[definition.StarterProduct] = true
+        end
     end
     for _, anomalyId in ipairs(Anomalies.ArchiveRows) do
         for _, productId in ipairs(Products.Order) do
@@ -104,7 +112,9 @@ local Migrations = {}
 -- onboarding as two booleans instead of a step.
 Migrations[1] = function(record)
     record._Meta = nil
-    if type(record.Factory) == "table" then record.Factory.ResearchLabPurchased = nil end
+    if type(record.Factory) == "table" then
+        record.Factory.ResearchLabPurchased = nil
+    end
     local onboarding = type(record.Onboarding) == "table" and record.Onboarding or {}
     if onboarding.TutorialStep == nil then
         onboarding.TutorialStep = onboarding.HasCompletedFirstShift == true and #Tutorial.Steps or 0
@@ -127,23 +137,31 @@ end
 local Repairer = {}
 Repairer.__index = Repairer
 
-function Repairer:note(message) table.insert(self.repairs, message) end
+function Repairer:note(message)
+    table.insert(self.repairs, message)
+end
 
 function Repairer:number(source, key, path, default, minimum, maximum)
     local value = type(source) == "table" and source[key] or nil
-    if value == nil then return default end
+    if value == nil then
+        return default
+    end
     if not finiteNumber(value) then
         self:note(path .. " invalid; defaulted")
         return default
     end
     local fixed = math.floor(math.clamp(value, minimum, maximum))
-    if fixed ~= value then self:note(path .. " clamped") end
+    if fixed ~= value then
+        self:note(path .. " clamped")
+    end
     return fixed
 end
 
 function Repairer:boolean(source, key, path, default)
     local value = type(source) == "table" and source[key] or nil
-    if value == nil then return default end
+    if value == nil then
+        return default
+    end
     if type(value) ~= "boolean" then
         self:note(path .. " invalid; defaulted")
         return default
@@ -153,7 +171,9 @@ end
 
 -- Copy keys the template does not know, untouched, so newer or retired data survives.
 function Repairer:keepUnknown(source, target, path)
-    if type(source) ~= "table" then return end
+    if type(source) ~= "table" then
+        return
+    end
     for key, value in pairs(source) do
         if target[key] == nil then
             target[key] = deepCopy(value)
@@ -164,7 +184,9 @@ end
 
 local function section(raw, name, repairer)
     local value = raw[name]
-    if value == nil then return {} end
+    if value == nil then
+        return {}
+    end
     if type(value) ~= "table" then
         repairer:note(name .. " invalid; defaulted")
         return {}
@@ -209,18 +231,44 @@ function Schema.Repair(raw)
         local sectionName, key = field[1], field[2]
         sections[sectionName] = sections[sectionName] or section(raw, sectionName, repairer)
         local minimum, maximum = Upgrades.LevelRange(upgradeId)
-        result[sectionName][key] = repairer:number(sections[sectionName], key, `{sectionName}.{key}`, template[sectionName][key], minimum, maximum)
+        result[sectionName][key] = repairer:number(
+            sections[sectionName],
+            key,
+            `{sectionName}.{key}`,
+            template[sectionName][key],
+            minimum,
+            maximum
+        )
     end
     -- The tier the belt is run at can never exceed the motor owned.
     sections.Line = sections.Line or section(raw, "Line", repairer)
-    result.Line.OperatingTier = repairer:number(sections.Line, "OperatingTier", "Line.OperatingTier", 1, 1, result.Line.BeltMotorTier)
-    for sectionName, source in pairs(sections) do repairer:keepUnknown(source, result[sectionName], sectionName .. ".") end
+    result.Line.OperatingTier =
+        repairer:number(sections.Line, "OperatingTier", "Line.OperatingTier", 1, 1, result.Line.BeltMotorTier)
+    for sectionName, source in pairs(sections) do
+        repairer:keepUnknown(source, result[sectionName], sectionName .. ".")
+    end
 
     local factory = section(raw, "Factory", repairer)
-    result.Factory.ProductionTier = repairer:number(factory, "ProductionTier", "Factory.ProductionTier", Factory.BaseTier.Production, Factory.BaseTier.Production, Factory.MaxTier("Production"))
-    result.Factory.ResearchTier = repairer:number(factory, "ResearchTier", "Factory.ResearchTier", Factory.BaseTier.Research, Factory.BaseTier.Research, Factory.MaxTier("Research"))
-    result.Factory.RejectGalleryPurchased = repairer:boolean(factory, "RejectGalleryPurchased", "Factory.RejectGalleryPurchased", false)
-    result.Factory.HouseholdProductionPurchased = repairer:boolean(factory, "HouseholdProductionPurchased", "Factory.HouseholdProductionPurchased", false)
+    result.Factory.ProductionTier = repairer:number(
+        factory,
+        "ProductionTier",
+        "Factory.ProductionTier",
+        Factory.BaseTier.Production,
+        Factory.BaseTier.Production,
+        Factory.MaxTier("Production")
+    )
+    result.Factory.ResearchTier = repairer:number(
+        factory,
+        "ResearchTier",
+        "Factory.ResearchTier",
+        Factory.BaseTier.Research,
+        Factory.BaseTier.Research,
+        Factory.MaxTier("Research")
+    )
+    result.Factory.RejectGalleryPurchased =
+        repairer:boolean(factory, "RejectGalleryPurchased", "Factory.RejectGalleryPurchased", false)
+    result.Factory.HouseholdProductionPurchased =
+        repairer:boolean(factory, "HouseholdProductionPurchased", "Factory.HouseholdProductionPurchased", false)
     if result.Factory.HouseholdProductionPurchased then
         local required = Factory.Projects.HouseholdProduction.Requirements.ProductionTier
         result.Factory.ProductionTier = math.max(result.Factory.ProductionTier, required)
@@ -233,15 +281,26 @@ function Schema.Repair(raw)
     local rawRevenue = type(products.DepartmentRevenue) == "table" and products.DepartmentRevenue or {}
     for _, departmentId in ipairs(Departments.Order) do
         local path = "Products.Departments." .. departmentId
-        result.Products.Departments[departmentId] = repairer:boolean(rawDepartments, departmentId, path, template.Products.Departments[departmentId])
-        result.Products.DepartmentRevenue[departmentId] = repairer:number(rawRevenue, departmentId, "Products.DepartmentRevenue." .. departmentId, 0, 0, MAX_AMOUNT)
+        result.Products.Departments[departmentId] =
+            repairer:boolean(rawDepartments, departmentId, path, template.Products.Departments[departmentId])
+        result.Products.DepartmentRevenue[departmentId] =
+            repairer:number(rawRevenue, departmentId, "Products.DepartmentRevenue." .. departmentId, 0, 0, MAX_AMOUNT)
     end
-    if result.Factory.HouseholdProductionPurchased then result.Products.Departments.Household = true end
+    if result.Factory.HouseholdProductionPurchased then
+        result.Products.Departments.Household = true
+    end
     for _, departmentId in ipairs(Departments.Order) do
-        if Departments.Definitions[departmentId].DefaultUnlocked then result.Products.Departments[departmentId] = true end
+        if Departments.Definitions[departmentId].DefaultUnlocked then
+            result.Products.Departments[departmentId] = true
+        end
     end
     for _, productId in ipairs(Products.Order) do
-        result.Products.Unlocked[productId] = repairer:boolean(rawUnlocked, productId, "Products.Unlocked." .. productId, template.Products.Unlocked[productId])
+        result.Products.Unlocked[productId] = repairer:boolean(
+            rawUnlocked,
+            productId,
+            "Products.Unlocked." .. productId,
+            template.Products.Unlocked[productId]
+        )
     end
     -- What revenue has earned is unlocked, whatever the record says.
     for _, departmentId in ipairs(Departments.Order) do
@@ -271,7 +330,8 @@ function Schema.Repair(raw)
     repairer:keepUnknown(rawArchive, result.Collection.Archive, "Collection.Archive.")
 
     local onboarding = section(raw, "Onboarding", repairer)
-    result.Onboarding.TutorialStep = repairer:number(onboarding, "TutorialStep", "Onboarding.TutorialStep", 0, 0, #Tutorial.Steps)
+    result.Onboarding.TutorialStep =
+        repairer:number(onboarding, "TutorialStep", "Onboarding.TutorialStep", 0, 0, #Tutorial.Steps)
     for _, key in ipairs({ "EarlyGoldenGuaranteeSatisfied", "MissingPartIntroduced", "ExtraPartIntroduced" }) do
         result.Onboarding[key] = repairer:boolean(onboarding, key, "Onboarding." .. key, false)
     end
@@ -284,15 +344,26 @@ function Schema.Repair(raw)
     repairer:keepUnknown(statistics, result.Statistics, "Statistics.")
 
     local funnel = section(raw, "Funnel", repairer)
-    result.Funnel.FirstProductHandled = repairer:boolean(funnel, "FirstProductHandled", "Funnel.FirstProductHandled", false)
-        or result.Statistics.TotalProductsHandled > 0
+    result.Funnel.FirstProductHandled = repairer:boolean(
+        funnel,
+        "FirstProductHandled",
+        "Funnel.FirstProductHandled",
+        false
+    ) or result.Statistics.TotalProductsHandled > 0
     result.Funnel.FirstDefectCaught = repairer:boolean(funnel, "FirstDefectCaught", "Funnel.FirstDefectCaught", false)
         or result.Statistics.TotalDefectsCaught > 0
     local anyUpgrade = false
     for upgradeId, field in pairs(Schema.UpgradeFields) do
-        if result[field[1]][field[2]] > (Upgrades.LevelRange(upgradeId)) then anyUpgrade = true end
+        if result[field[1]][field[2]] > (Upgrades.LevelRange(upgradeId)) then
+            anyUpgrade = true
+        end
     end
-    result.Funnel.FirstUpgradePurchased = repairer:boolean(funnel, "FirstUpgradePurchased", "Funnel.FirstUpgradePurchased", false) or anyUpgrade
+    result.Funnel.FirstUpgradePurchased = repairer:boolean(
+        funnel,
+        "FirstUpgradePurchased",
+        "Funnel.FirstUpgradePurchased",
+        false
+    ) or anyUpgrade
     repairer:keepUnknown(funnel, result.Funnel, "Funnel.")
 
     repairer:keepUnknown(raw, result, "")

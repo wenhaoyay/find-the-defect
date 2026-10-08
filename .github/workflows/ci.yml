@@ -36,10 +36,6 @@ jobs:
       - name: Build the place
         run: rojo build default.project.json -o find-the-defect.rbxl
       - name: Check formatting
-        # Advisory until the first run: StyLua has not yet been run on this code.
-        continue-on-error: true
         run: stylua --check src tests tools
       - name: Lint
-        # Advisory until the first run: Selene has not yet been run on this code.
-        continue-on-error: true
         run: selene src

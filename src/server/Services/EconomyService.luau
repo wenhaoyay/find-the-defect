@@ -28,7 +28,9 @@ end
 local function flush(player, data)
     local pending = batched[player]
     batched[player] = nil
-    if not pending or not data then return end
+    if not pending or not data then
+        return
+    end
     for _, entry in pairs(pending) do
         Analytics.Economy(player, "Source", entry.Amount, data.Economy.Credits, entry.Transaction, entry.Sku)
     end
@@ -39,7 +41,9 @@ function EconomyService.Init()
     task.spawn(function()
         while true do
             task.wait(FLUSH_INTERVAL)
-            for player in pairs(batched) do flush(player, DataService.Get(player)) end
+            for player in pairs(batched) do
+                flush(player, DataService.Get(player))
+            end
         end
     end)
 end
@@ -57,24 +61,31 @@ end
 function EconomyService.Grant(player, amount, options)
     options = options or {}
     local data = DataService.Get(player)
-    if not data then return 0 end
+    if not data then
+        return 0
+    end
     if not finite(amount) then
         warn("[Economy] refused a non-finite grant: " .. tostring(options.Sku))
         return 0
     end
     amount = math.floor(amount + 0.5)
-    if amount <= 0 then return 0 end
+    if amount <= 0 then
+        return 0
+    end
 
     local before = data.Economy.Credits
     data.Economy.Credits = math.min(MAX_CREDITS, before + amount)
     local granted = data.Economy.Credits - before
-    if granted <= 0 then return 0 end
+    if granted <= 0 then
+        return 0
+    end
 
     if options.Revenue ~= false then
         data.Economy.LineRevenue = math.min(MAX_CREDITS, data.Economy.LineRevenue + granted)
         local department = options.Department
         if department and data.Products.DepartmentRevenue[department] ~= nil then
-            data.Products.DepartmentRevenue[department] = math.min(MAX_CREDITS, data.Products.DepartmentRevenue[department] + granted)
+            data.Products.DepartmentRevenue[department] =
+                math.min(MAX_CREDITS, data.Products.DepartmentRevenue[department] + granted)
         end
     end
     data.Statistics.TotalCreditsEarned = math.min(MAX_CREDITS, data.Statistics.TotalCreditsEarned + granted)
@@ -82,7 +93,9 @@ function EconomyService.Grant(player, amount, options)
     local transaction = options.Transaction or "Gameplay"
     local sku = options.Sku or "Unspecified"
     local batch = options.Batch
-    if batch == nil then batch = transaction == "Gameplay" end
+    if batch == nil then
+        batch = transaction == "Gameplay"
+    end
     if batch then
         local pending = batched[player] or {}
         batched[player] = pending
@@ -103,13 +116,26 @@ end
 function EconomyService.Spend(player, cost, options)
     options = options or {}
     local data = DataService.Get(player)
-    if not data then return false, "NoData" end
-    if not finite(cost) or cost < 0 or cost ~= math.floor(cost) then return false, "InvalidCost" end
-    if data.Economy.Credits < cost then return false, "InsufficientCredits" end
+    if not data then
+        return false, "NoData"
+    end
+    if not finite(cost) or cost < 0 or cost ~= math.floor(cost) then
+        return false, "InvalidCost"
+    end
+    if data.Economy.Credits < cost then
+        return false, "InsufficientCredits"
+    end
 
     data.Economy.Credits -= cost
     if cost > 0 then
-        Analytics.Economy(player, "Sink", cost, data.Economy.Credits, options.Transaction or "Shop", options.Sku or "Unspecified")
+        Analytics.Economy(
+            player,
+            "Sink",
+            cost,
+            data.Economy.Credits,
+            options.Transaction or "Shop",
+            options.Sku or "Unspecified"
+        )
     end
     EconomyService.Changed:Fire(player, data.Economy.Credits, -cost, options.Sku)
     DataService.Checkpoint(player)

@@ -7,9 +7,15 @@ end
 describe("config", function()
     it("is frozen all the way down", function()
         local config = Config()
-        expect(function() config.Anomalies.BaseChance = 1 end).toThrow()
-        expect(function() config.Products.Definitions.TeddyBear.Multiplier = 99 end).toThrow()
-        expect(function() config.Upgrades.Definitions.BeltMotor.Levels[1].Speed = 99 end).toThrow()
+        expect(function()
+            config.Anomalies.BaseChance = 1
+        end).toThrow()
+        expect(function()
+            config.Products.Definitions.TeddyBear.Multiplier = 99
+        end).toThrow()
+        expect(function()
+            config.Upgrades.Definitions.BeltMotor.Levels[1].Speed = 99
+        end).toThrow()
     end)
 
     it("gives every product a department, a valid unlock, and real component defects", function()
@@ -53,8 +59,13 @@ describe("config", function()
     it("makes every upgrade level cost more and do more than the last", function()
         local upgrades = Config().Upgrades
         local effect = {
-            ProductValue = "Multiplier", BeltMotor = "Speed", InspectionRunway = "Length", AnomalyLuck = "Multiplier",
-            AnomalyQuality = "GlitchedShare", RushDuration = "Duration", RushPay = "Multiplier",
+            ProductValue = "Multiplier",
+            BeltMotor = "Speed",
+            InspectionRunway = "Length",
+            AnomalyLuck = "Multiplier",
+            AnomalyQuality = "GlitchedShare",
+            RushDuration = "Duration",
+            RushPay = "Multiplier",
         }
         for upgradeId, definition in pairs(upgrades.Definitions) do
             expect(definition.Levels[1].Cost).toBe(0)
@@ -62,8 +73,12 @@ describe("config", function()
                 local previous, current = definition.Levels[level - 1], definition.Levels[level]
                 expect(current.Cost).toBeGreaterThan(previous.Cost)
                 local key = effect[upgradeId]
-                if key then expect(current[key]).toBeGreaterThan(previous[key]) end
-                if upgradeId == "StreakShield" and level > 2 then expect(current.Recharge).toBeLessThan(previous.Recharge) end
+                if key then
+                    expect(current[key]).toBeGreaterThan(previous[key])
+                end
+                if upgradeId == "StreakShield" and level > 2 then
+                    expect(current.Recharge).toBeLessThan(previous.Recharge)
+                end
             end
         end
         expect(upgrades.Get("StreakShield", 0).Recharge).toBe(0)

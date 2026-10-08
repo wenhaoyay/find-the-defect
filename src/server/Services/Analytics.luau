@@ -11,7 +11,9 @@ local Analytics = {}
 local FIELD_KEYS = { "CustomField01", "CustomField02", "CustomField03" }
 
 local function customFields(fields)
-    if fields == nil then return nil end
+    if fields == nil then
+        return nil
+    end
     if #fields > #FIELD_KEYS then
         error(`Analytics: at most {#FIELD_KEYS} custom fields, got {#fields}`, 3)
     end
@@ -50,7 +52,9 @@ end
 -- flow: "Source" or "Sink"; transaction: an Enum.AnalyticsEconomyTransactionType name
 -- such as "Gameplay", "Shop" or "Onboarding"; sku: what it was for.
 function Analytics.Economy(player, flow, amount, endingBalance, transaction, sku)
-    if not finite(amount) or amount <= 0 then return false end
+    if not finite(amount) or amount <= 0 then
+        return false
+    end
     return safely(
         AnalyticsService.LogEconomyEvent,
         player,
@@ -65,7 +69,14 @@ end
 
 -- status: "Start", "Complete" or "Fail".
 function Analytics.Progression(player, path, status, level, levelName)
-    return safely(AnalyticsService.LogProgressionEvent, player, path, Enum.AnalyticsProgressionType[status], level, levelName)
+    return safely(
+        AnalyticsService.LogProgressionEvent,
+        player,
+        path,
+        Enum.AnalyticsProgressionType[status],
+        level,
+        levelName
+    )
 end
 
 return Analytics

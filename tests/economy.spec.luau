@@ -5,14 +5,18 @@ local function boot(t)
     local DataService = t.server:require("ServerScriptService.Server.Services.DataService")
     local Economy = t.server:require("ServerScriptService.Server.Services.EconomyService")
     local player = t.server:addPlayer({ userId = 1 })
-    t.world:waitUntil(function() return DataService.IsLoaded(player) end, 60, "load")
+    t.world:waitUntil(function()
+        return DataService.IsLoaded(player)
+    end, 60, "load")
     return Economy, DataService.Get(player), player
 end
 
 local function economyEvents(t, flow)
     local out = {}
     for _, event in ipairs(t.server.analytics) do
-        if event.kind == "Economy" and (flow == nil or event.flow == flow) then table.insert(out, event) end
+        if event.kind == "Economy" and (flow == nil or event.flow == flow) then
+            table.insert(out, event)
+        end
     end
     return out
 end
@@ -70,7 +74,9 @@ describe("economy", function()
 
     it("reports spends at once and gameplay income in batches", function(t)
         local Economy, _, player = boot(t)
-        for _ = 1, 30 do Economy.Grant(player, 2, { Sku = "NormalPass", Department = "Toys" }) end
+        for _ = 1, 30 do
+            Economy.Grant(player, 2, { Sku = "NormalPass", Department = "Toys" })
+        end
         Economy.Grant(player, 25, { Transaction = "Onboarding", Sku = "FirstCatch" })
         Economy.Spend(player, 50, { Sku = "Upgrade:ProductValue:2" })
         expect(#economyEvents(t, "Sink")).toBe(1)
