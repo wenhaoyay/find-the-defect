@@ -1,0 +1,27 @@
+{
+  "name": "find-the-defect",
+  "version": "1.0.0",
+  "description": "**Server-authoritative Roblox factory inspection and progression systems built in Luau.**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wenhaoyay/find-the-defect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wenhaoyay/find-the-defect/issues"
+  },
+  "homepage": "https://github.com/wenhaoyay/find-the-defect#readme",
+  "devDependencies": {
+    "luau-web": "1.5.0"
+  }
+}
