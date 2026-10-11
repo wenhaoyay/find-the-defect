@@ -39,3 +39,10 @@ jobs:
         run: stylua --check src tests tools
       - name: Lint
         run: selene src
+      - name: Upload Roblox Studio test place
+        uses: actions/upload-artifact@v4
+        with:
+          name: find-the-defect-studio-build
+          path: find-the-defect.rbxl
+          if-no-files-found: error
+          retention-days: 7
