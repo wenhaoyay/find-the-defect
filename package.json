@@ -1,0 +1,15 @@
+{
+  "name": "find-the-defect",
+  "private": true,
+  "description": "Find the Defect! — test tooling. The game itself is Luau, built with Rojo.",
+  "type": "module",
+  "scripts": {
+    "test": "node tools/harness/run.mjs",
+    "format": "node tools/format.mjs",
+    "format:check": "node tools/format.mjs --check"
+  },
+  "devDependencies": {
+    "@johnnymorganz/stylua": "2.5.2",
+    "luau-web": "1.5.0"
+  }
+}

@@ -1,0 +1,2 @@
+std = "roblox"
+exclude = ["vendor/*", "legacy/*", "tools/*", "tests/*"]
